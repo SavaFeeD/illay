@@ -1,12 +1,12 @@
+import type { IPosition, ISize } from 'canvas-editor-engine/dist/types/general';
 import { defineStore } from 'pinia'
-import type { IWorkplace, ICreateWorkplace, IToolRegistryItem, ISelectedWorkplace } from '~/types/workplace.types';
+import type { IWorkplace, ICreateWorkplace, IToolRegistryItem, ISelectedWorkplace, IPutWorkplaceSettings } from '~/types/workplace.types';
 
 export const useWorkplaceStore = defineStore('workplace', {
   state: () => ({
     workplaceList: [] as IWorkplace[],
     toolRegistry: [] as IToolRegistryItem[],
     selectedWorkplace: null as ISelectedWorkplace | null,
-    // loadedImage: null as ILoadedImage | null,
   }),
 
   getters: {
@@ -17,8 +17,10 @@ export const useWorkplaceStore = defineStore('workplace', {
 
   actions: {
     createWorkplace(workplace: ICreateWorkplace) {
+      const id = Date.now();
       const newWorkplace: IWorkplace = {
-        id: Date.now(),
+        id,
+        title: `Workspace #${id}`,
         ...workplace,
       };
       this.workplaceList.push(newWorkplace);
@@ -39,19 +41,32 @@ export const useWorkplaceStore = defineStore('workplace', {
         (workplace as ISelectedWorkplace).canvas = canvas;
         (workplace as ISelectedWorkplace).editor = editor;
         this.selectedWorkplace = workplace as ISelectedWorkplace;
+      } else {
+        this.selectedWorkplace = null;
       }
     },
 
-    // setLoadedImage(workplaceId: IWorkplace['id'], src: string) {
-    //   this.loadedImage = {
-    //     workplaceId,
-    //     src,
-    //   };
-    // },
-
     unset() {
       this.selectedWorkplace = null;
-    }
+    },
+
+    putWorkplaceSettings(workplaceId: IWorkplace['id'], settings: IPutWorkplaceSettings) {
+      const listing = this.workplaceList.map((workplace) => {
+        if (workplace.id === workplaceId) {
+          if (settings.position) {
+            workplace.position = settings.position;
+          }
+          if (settings.size) {
+            workplace.size = settings.size;
+          }
+        }
+        return workplace;
+      });
+      if (listing) {
+        this.workplaceList = listing;
+      }
+      console.log('2 this.workplaceList', this.workplaceList);
+    },
   },
   
-})
+});

@@ -1,19 +1,17 @@
 <script setup lang="ts">
+import { E_GLOBAL_MOVEMENT_OBJECT_INDEX, type IMovementActions, type IMovementData, type TZoomValue } from '~/types/movement-object.types';
+
 interface IProps {
-  movementData: {
-    left: number;
-    top: number;
-  };
-  movementActions: {
-    start: boolean;
-    end: boolean;
-    move: boolean;
-  };
-  isReload: boolean;
-  zoom: number;
+  order: number | E_GLOBAL_MOVEMENT_OBJECT_INDEX;
+  isReload?: boolean;
 }
+
 const props = defineProps<IProps>();
 const emit = defineEmits(["reloaded"]);
+
+const movementObjectStore = useMovementObjectStore();
+
+const activeOrder = computed(() => movementObjectStore.getOrder);
 
 const zeroCoord = ref({
   x: 0,
@@ -32,13 +30,23 @@ const newCoord = ref({
   y: 0,
 });
 
+const movementData = inject<ComputedRef<IMovementData>>('movementData');
+const movementActions = inject<Ref<IMovementActions>>('movementActions');
+const zoom = inject<Ref<TZoomValue>>('zoom');
+
 const scale = ref(1);
 
-const styles = computed(() => ({
-  left: newCoord.value.x + leftMove.value + "px",
-  top:  newCoord.value.y + topMove.value + "px",
-  transform: `scale(${scale.value})`,
-}));
+const styles = computed(() => {
+  const styleData: any = {
+    left: newCoord.value.x + leftMove.value + "px",
+    top:  newCoord.value.y + topMove.value + "px",
+    transform: `scale(${scale.value})`,
+  }
+  if (props.order === E_GLOBAL_MOVEMENT_OBJECT_INDEX['SPACE_CONTAINER']) {
+    styleData.translate = `calc(100vw / 2) calc(100vh / 2)`;
+  }
+  return styleData; 
+});
 const styleObject = reactive(styles);
 
 function toZeroCoord() {
@@ -67,35 +75,49 @@ watch(() => props.isReload, (newVal) => {
   }
 }, { deep: true, immediate: true });
 
-watch(() => props.movementData, (newVal) => {
-  leftMove.value = newVal.left;
-  topMove.value = newVal.top;
-}, { deep: true, immediate: true });
+watchEffect(() => {
+  if (!movementData?.value) return;
+  if (props.order !== activeOrder.value) return;
+  
+  leftMove.value = movementData.value.left;
+  topMove.value = movementData.value.top;
+});
 
-watch(() => props.movementActions, (newVal) => {
-  if (newVal.start) {
+watchEffect(() => {
+  if (!movementActions?.value) return;
+  if (props.order !== activeOrder.value) return;
+
+  if (movementActions.value.start) {
     newCoord.value.x = savedCoord.value.x;
     newCoord.value.y = savedCoord.value.y;
   }
-  if (newVal.end) {
+  if (movementActions.value.end) {
     savedCoord.value.x = newCoord.value.x + leftMove.value;
     savedCoord.value.y = newCoord.value.y + topMove.value;
   }
-}, { deep: true, immediate: true });
+});
 
-watch(() => props.zoom, (newVal) => {
-  scale.value = newVal;
+watchEffect(() => {
+  if (!zoom?.value) return;
+  if (props.order !== E_GLOBAL_MOVEMENT_OBJECT_INDEX['SPACE_CONTAINER']) return;
+
+  scale.value = zoom.value;
 });
 </script>
 
 <template>
   <div class="movement" :style="styleObject">
-    <slot />
+    <div class="nesting">
+      <slot />
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
   .movement {
     position: absolute;
+  }
+  .nesting {
+    position: relative;
   }
 </style>

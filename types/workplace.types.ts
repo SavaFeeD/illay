@@ -1,15 +1,23 @@
-import type { ITool } from "canvas-editor-engine/dist/types/general";
+import type { IPosition, ISize, ITool } from "canvas-editor-engine/dist/types/general";
 
 export interface IEntityWorkplace {
-  name: string;
+  position: IPosition;
+  size: ISize;
 }
 
 export interface IWorkplace extends IEntityWorkplace{
   id: number;
+  title: string;
 };
 
 export interface ICreateWorkplace extends IEntityWorkplace{
   id?: number;
+  title?: string;
+};
+
+export interface IPutWorkplaceSettings {
+  position?: IPosition;
+  size?: ISize;
 }
 
 export interface ISelectedWorkplace extends IWorkplace{
@@ -22,8 +30,3 @@ export interface IToolRegistryItem {
   workplaceId: IWorkplace['id'];
   registry: ITool[];
 }
-
-// export interface ILoadedImage {
-//   workplaceId: IWorkplace['id'];
-//   src: string;
-// }

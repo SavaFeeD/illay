@@ -1,12 +1,20 @@
 <script setup lang="ts">
-import type { TToolName } from '~/types/tool.types';
+import { E_GLOBAL_MOVEMENT_OBJECT_INDEX, type IMovementActions, type IMovementData, type TZoomValue } from '~/types/movement-object.types';
 import SpaceEvents from '~/utils/event-handler.space';
 
 const toolStore = useToolStore();
+const movementObjectStore = useMovementObjectStore();
 
-const activeTool: ComputedRef<TToolName | null> = computed(() => toolStore.getActiveTool);
+const activeTool = computed(() => toolStore.getActiveTool);
+const isMovementTool = computed(() => !!activeTool.value && (activeTool.value === 'grab' || activeTool.value === 'cursor-move'));
+
+const activeOrder = computed(() => movementObjectStore.getOrder);
 
 const zoom: Ref<number> = ref(1);
+
+watch(zoom, (zoomValue) => {
+  movementObjectStore.setZoom(zoomValue);
+});
 
 const movementActions = ref({
   start: false,
@@ -31,6 +39,20 @@ const topMove = computed(() => {
   return endCoord.value.y - startCoord.value.y;
 });
 
+const movementData = computed(() => {
+  if (activeOrder.value === E_GLOBAL_MOVEMENT_OBJECT_INDEX['SPACE_CONTAINER']) {
+    return {
+      left: leftMove.value,
+      top: topMove.value,
+    }
+  } else {
+    return {
+      left: leftMove.value / zoom.value,
+      top: topMove.value / zoom.value,
+    }
+  }
+});
+
 function movementStart(e: MouseEvent) {
   movementActions.value.move = true;
   movementActions.value.start = true;
@@ -48,7 +70,7 @@ function movementEnd(e: MouseEvent) {
 }
 
 function movement(e: MouseEvent) {
-  if (movementActions.value.move && activeTool.value === 'grab') {
+  if (movementActions.value.move && isMovementTool.value) {
     endCoord.value.x = e.clientX;
     endCoord.value.y = e.clientY;
   }
@@ -71,6 +93,10 @@ function reloadPosition() {
   isReload.value = true;
 };
 
+provide<ComputedRef<IMovementData>>('movementData', movementData);
+provide<Ref<IMovementActions>>('movementActions', movementActions);
+provide<Ref<TZoomValue>>('zoom', zoom);
+
 onMounted(() => {
   SpaceEvents.on('space:reload', reloadPosition);
 })
@@ -89,13 +115,8 @@ onMounted(() => {
     @mouseout="movementEnd"
   >
     <movement-object
-      :movement-data="{
-        left: leftMove,
-        top: topMove,
-      }"
-      :movement-actions="movementActions"
+      :order="E_GLOBAL_MOVEMENT_OBJECT_INDEX['SPACE_CONTAINER']"
       :is-reload="isReload"
-      :zoom="zoom"
       @reloaded="isReload = false"
     >
       <slot />

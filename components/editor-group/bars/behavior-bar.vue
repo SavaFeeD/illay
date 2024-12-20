@@ -1,12 +1,37 @@
 <script setup lang="ts">
 import type { IDrawImageArgs } from 'canvas-editor-engine/dist/types/image';
-import type { TToolName } from '~/types/tool.types';
+import ExecutionDelay from 'execution-delay';
+import type { IChangeQuality, TToolName } from '~/types/tool.types';
 
 const toolStore = useToolStore();
 const workplaceStore = useWorkplaceStore();
 
 const activeTool: ComputedRef<TToolName | null> = computed(() => toolStore.getActiveTool);
 const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
+
+const behavior = ref({
+  position: {
+    x: 0,
+    y: 0,
+  },
+  size: {
+    width: 0,
+    height: 0,
+  },
+  quality: 0,
+});
+
+const changeQualityData: ComputedRef<IChangeQuality> = computed(() => ({
+  value: behavior.value.quality,
+  workplaceId: (selectedWorkplace.value?.id) ? selectedWorkplace.value.id : null,
+}));
+
+watch(changeQualityData, (changeQualityDataValue) => {
+  console.log('changeQualityDataValue', changeQualityDataValue);
+  ExecutionDelay.add('setBehaviorChangeQuality', () => {
+    toolStore.setBehaviorChangeQuality(changeQualityDataValue);
+  }, 400);
+}, { deep: true });
 
 function setActiveTool(tool: TToolName) {
   if (activeTool.value === tool) {
@@ -16,34 +41,28 @@ function setActiveTool(tool: TToolName) {
   toolStore.setActiveTool(tool);
 }
 
-
 function setImage(event: Event) {
   let file: File | null = null;
+  let src: string | null = null;
   const target = event.target as HTMLInputElement;
+  const ctx = selectedWorkplace.value?.ctx
+  const editor = selectedWorkplace.value?.editor;
 
   if (target && target.files) {
     file = target.files[0];
   }
 
-  if (!!file) {
-    const src = window.URL.createObjectURL(file);
-    console.log('src', src);
-    
-    // if (selectedWorkplace.value?.id) {
-    //   workplaceStore.setLoadedImage(selectedWorkplace.value.id, src)
-    // }
+  if (!file || !ctx || !editor) return;
 
-    if (!!selectedWorkplace.value?.ctx && !!selectedWorkplace.value?.editor) {
-      const options: IDrawImageArgs = {
-        position: {
-          x: 0,
-          y: 0,
-        }
-      };
-      // @ts-ignore
-      selectedWorkplace.value?.editor.drawService.drawImage(selectedWorkplace.value?.ctx, src, options);
+  src = window.URL.createObjectURL(file);
+  const options: IDrawImageArgs = {
+    position: {
+      x: 0,
+      y: 0,
     }
-  }
+  };
+  // @ts-ignore
+  selectedWorkplace.value?.editor.drawService.drawImage(selectedWorkplace.value.ctx, src, options);
 }
 </script>
 
@@ -63,24 +82,40 @@ function setImage(event: Event) {
         capture
       >
     </div>
-    <div class="behavior-inputs">
-      <div class="behavior-inputs_position">
-        <label for="position-x">X:</label>
-        <input type="number" name="position-x" id="position-x">
-      </div>
-      <div class="behavior-inputs_position">
-        <label for="position-y">Y:</label>
-        <input type="number" name="position-y" id="position-y">
+    <div class="behavior-inputs-wrapper">
+      <h5 class="behavior-inputs-wrapper__title">position</h5>
+      <div class="behavior-inputs-wrapper__inputs">
+        <div class="behavior-inputs behavior-inputs_position" title="axis x">
+          <label for="position-x">X:</label>
+          <input v-model="behavior.position.x" type="number" name="position-x" id="position-x">
+        </div>
+        <div class="behavior-inputs behavior-inputs_position" title="axis y">
+          <label for="position-y">Y:</label>
+          <input v-model="behavior.position.y" type="number" name="position-y" id="position-y">
+        </div>
       </div>
     </div>
-    <div class="behavior-inputs">
-      <div class="behavior-inputs_size">
-        <label for="size-w">Width:</label>
-        <input type="number" name="size-w" id="size-w">
+    <div class="behavior-inputs-wrapper">
+      <h5 class="behavior-inputs-wrapper__title">size</h5>
+      <div class="behavior-inputs-wrapper__inputs">
+        <div class="behavior-inputs behavior-inputs_size" title="width">
+          <label for="size-w">W:</label>
+          <input v-model="behavior.size.width" type="number" name="size-w" id="size-w">
+        </div>
+        <div class="behavior-inputs behavior-inputs_size" title="height">
+          <label for="size-h">H:</label>
+          <input v-model="behavior.size.height" type="number" name="size-h" id="size-h">
+        </div>
       </div>
-      <div class="behavior-inputs_size">
-        <label for="size-h">Height:</label>
-        <input type="number" name="size-h" id="size-h">
+    </div>
+    <h4 class="group-title">Filters</h4>
+    <div class="behavior-inputs-wrapper">
+      <h5 class="behavior-inputs-wrapper__title">quality</h5>
+      <div class="behavior-inputs-wrapper__inputs">
+        <div class="behavior-inputs behavior-inputs_size" title="quality">
+          <label for="quality">Q:</label>
+          <input v-model="behavior.quality" type="number" name="quality" id="quality">
+        </div>
       </div>
     </div>
   </div>
@@ -90,7 +125,6 @@ function setImage(event: Event) {
   .behavior-bar {
     display: flex;
     flex-direction: column;
-    padding: 20px 0;
     gap: 10px;
   }
 
@@ -114,6 +148,72 @@ function setImage(event: Event) {
     &__active {
       border: none;
       background: -webkit-linear-gradient(215deg, rgba(0,0,255,1) 0%, rgba(255,0,194,1) 100%);
+    }
+  }
+
+  .group-title {
+    width: 100%;
+    color: #6d6e79;
+    margin: 10px 0 0 0;
+    font-weight: 400;
+    text-transform: uppercase;
+  }
+
+  .behavior-buttons {
+    cursor: pointer;
+    > * {
+      cursor: pointer;
+    }
+  }
+
+  .behavior-button {
+    border: #535460 1px solid;
+    border-radius: 7px;
+    padding: 10px;
+    display: flex;
+    justify-content: center;
+    text-transform: uppercase;
+    font-size: 13px;
+  }
+
+  .behavior-inputs-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+
+    &__title {
+      width: 100%;
+      color: #535460;
+      margin: 0;
+      font-weight: 400;
+    }
+
+    &__inputs {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+  }
+
+  .behavior-inputs {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+
+    label {
+      position: absolute;
+      left: 6px;
+      font-size: 12px;
+    }
+    input {
+      color: #ffffff;
+      padding: 4px 8px 4px 25px;
+      max-width: 30px;
+      background-color: #242424;
+      border: none;
+      border-radius: 5px;
+      min-width: 60px;
     }
   }
 </style>
