@@ -3,9 +3,11 @@ definePageMeta({
   layout: 'editor'
 })
 
+const toolStore = useToolStore();
 const workplaceStore = useWorkplaceStore();
 
 const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
+const activeBehaviorBar = computed(() => toolStore.getActiveBar);
 </script>
 
 <template>
@@ -21,7 +23,19 @@ const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
     v-if="!!selectedWorkplace"
     class="ui ui__right-top-bar"
   >
-    <behavior-bar />
+    <div class="wrapper">
+      <div class="subbars">
+        <behavior-bar />
+      </div>
+    </div>
+    <div class="subbars" v-if="activeBehaviorBar">
+      <settings-bar v-show="activeBehaviorBar === 'settings'" />
+      <filter-bar v-show="activeBehaviorBar === 'filter'" />
+      <image-bar v-show="activeBehaviorBar === 'image'" />
+      <history-bar v-show="activeBehaviorBar === 'history'" />
+      <layers-bar v-show="activeBehaviorBar === 'layers'" />
+      <export-bar v-show="activeBehaviorBar === 'export'" />
+    </div>
   </div>
 
   <ce-editor class="editor"></ce-editor>
@@ -58,12 +72,23 @@ const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
     &__right-top-bar {
       display: flex;
       flex-direction: column;
-      align-items: center;
+      gap: 10px;
       top: 20px;
       right: 25px;
-      padding: 15px;
-      background: #181818;
-      border-radius: 10px;
+
+      .wrapper {
+        display: flex;
+        flex-direction: row-reverse;
+      }
+
+      .subbars {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 15px;
+        background: #181818;
+        border-radius: 10px;
+      }
     }
   }
 

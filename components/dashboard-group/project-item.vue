@@ -1,17 +1,21 @@
 <script setup lang="ts">
+import type { IDocumentInfo } from '~/types/document.types';
+import type { TSaveMethod } from '~/types/project-illay.types';
+
 interface IProps {
-  projectId: number;
+  documentFsId: IDocumentInfo['documentFsId'];
+  storeMethod: TSaveMethod;
 }
 const props = defineProps<IProps>();
 
-const computedLink = computed(combineLink)
+const combinedLink = computed(combineLink)
 
 function combineLink() {
-  return '/editor' + '?projectId=' + props.projectId;
+  return `/editor?documentFsId=${props.documentFsId}&storeMethod=${props.storeMethod}`;
 }
 
 function toEditor() {
-  const link = computedLink.value;
+  const link = combinedLink.value;
   navigateTo(link);
 }
 </script>

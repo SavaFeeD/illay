@@ -1,4 +1,7 @@
+import type { ILayer } from "canvas-editor-engine/dist/types/draw-layers";
+import type { IPainter } from "canvas-editor-engine/dist/types/draw-service";
 import type { IPosition, ISize, ITool } from "canvas-editor-engine/dist/types/general";
+import type WebComponent from "canvas-editor-engine/dist/web-component";
 
 export interface IEntityWorkplace {
   position: IPosition;
@@ -8,6 +11,8 @@ export interface IEntityWorkplace {
 export interface IWorkplace extends IEntityWorkplace{
   id: number;
   title: string;
+  editor: null | WebComponent;
+  activeLayerId: null | ILayer['id'];
 };
 
 export interface ICreateWorkplace extends IEntityWorkplace{
@@ -23,10 +28,15 @@ export interface IPutWorkplaceSettings {
 export interface ISelectedWorkplace extends IWorkplace{
   ctx: CanvasRenderingContext2D;
   canvas: HTMLCanvasElement;
-  editor: HTMLDivElement;
+  editor: WebComponent;
 };
 
 export interface IToolRegistryItem {
   workplaceId: IWorkplace['id'];
   registry: ITool[];
+}
+
+export interface ISelectedPainter {
+  workplaceId: IWorkplace['id'];
+  painter: IPainter;
 }

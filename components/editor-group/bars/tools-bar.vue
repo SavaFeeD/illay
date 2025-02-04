@@ -10,7 +10,7 @@ const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
 
 function setActiveTool(tool: TToolName) {
   if (activeTool.value === tool) {
-    toolStore.unset();
+    toolStore.unsetActiveTool();
     return;
   }
   toolStore.setActiveTool(tool);
@@ -21,7 +21,7 @@ function setActiveTool(tool: TToolName) {
 
 
 function unsetActiveTool() {
-  toolStore.unset();
+  toolStore.unsetActiveTool();
 }
 </script>
 

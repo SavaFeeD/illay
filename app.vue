@@ -1,8 +1,18 @@
+<script setup lang="ts">
+  import { VueCanvasEditorEngine } from 'canvas-editor-engine';
+
+  const VueCanvasEditorEngineInstance = new VueCanvasEditorEngine();
+  const initial = VueCanvasEditorEngineInstance.getInitial();
+  customElements.define('canvas-editor-engine', initial.component);
+</script>
+
 <template>
   <div class="app">
-    <NuxtLayout class="app__layout">
-      <NuxtPage/>
-    </NuxtLayout>
+    <UApp>
+      <NuxtLayout class="app__layout">
+        <NuxtPage/>
+      </NuxtLayout>
+    </UApp>
   </div>
 </template>
 

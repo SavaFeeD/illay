@@ -1,15 +1,18 @@
 <script setup lang="ts">
 import { E_GLOBAL_MOVEMENT_OBJECT_INDEX, type IMovementActions, type IMovementData, type TZoomValue } from '~/types/movement-object.types';
+import type { IWorkplaceProject } from '~/types/project-illay.types';
 
 interface IProps {
   order: number | E_GLOBAL_MOVEMENT_OBJECT_INDEX;
   isReload?: boolean;
+  recovery?: IWorkplaceProject;
 }
 
 const props = defineProps<IProps>();
 const emit = defineEmits(["reloaded"]);
 
 const movementObjectStore = useMovementObjectStore();
+const workplaceStore = useWorkplaceStore();
 
 const activeOrder = computed(() => movementObjectStore.getOrder);
 
@@ -103,6 +106,27 @@ watchEffect(() => {
 
   scale.value = zoom.value;
 });
+
+watch(styleObject, (value) => {
+  if (props.order != E_GLOBAL_MOVEMENT_OBJECT_INDEX['SPACE_CONTAINER']) {
+    workplaceStore.setPositionForWorkplace(props.order, {
+      x: value.left.replace("px", ""),
+      y: value.top.replace("px", ""),
+    });
+  }
+})
+
+onMounted(() => {
+  if (props.recovery) {
+    setTimeout(() => {
+      console.log("props.recovery", props.recovery);
+      const { x, y } = (props.recovery) ? props.recovery.position : {x: 0, y: 0};
+      newCoord.value.x = +x;
+      newCoord.value.y = +y;
+      console.log('styleObject', styleObject.value);
+    }, 10);
+  }
+})
 </script>
 
 <template>

@@ -1,81 +1,50 @@
 <script setup lang="ts">
-import type { TBarName } from '~/types/tool.types';
+import ExecutionDelay from 'execution-delay';
+import type { IChangeQuality } from '~/types/tool.types';
 
 const toolStore = useToolStore();
+const workplaceStore = useWorkplaceStore();
 
-const activeBar: ComputedRef<TBarName | null> = computed(() => toolStore.getActiveBar);
+const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
 
-function setActiveBar(bar: TBarName) {
-  if (activeBar.value === bar) {
-    toolStore.unsetActiveBar();
-    return;
-  }
-  toolStore.setActiveBar(bar);
-}
+const behavior = ref({
+  quality: 0,
+});
+
+const changeQualityData = computed(() => ({
+  quality: behavior.value.quality,
+}));
+
+watch(changeQualityData, () => {
+  ExecutionDelay.add('setBehaviorChangeQuality', () => {
+    const changeQualityDataValue: IChangeQuality = {
+      value: changeQualityData.value.quality,
+      workplaceId: (selectedWorkplace.value?.id) ? selectedWorkplace.value.id : null,
+    }
+    toolStore.setBehaviorChangeQuality(changeQualityDataValue);
+  }, 400);
+}, { deep: true });
 </script>
 
 <template>
   <div class="behavior-bar">
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'settings',
-      }"
-      @click="setActiveBar('settings')"
-    >
-      <img src="/tools/settings.svg" alt="settings">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'image',
-      }"
-      @click="setActiveBar('image')"
-    >
-      <img src="/tools/image.svg" alt="image">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'filter',
-      }"
-      @click="setActiveBar('filter')"
-    >
-      <img src="/tools/filter.svg" alt="filter">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'history',
-      }"
-      @click="setActiveBar('history')"
-    >
-      <img src="/tools/history.svg" alt="history">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'layers',
-      }"
-      @click="setActiveBar('layers')"
-    >
-      <img src="/tools/layers.svg" alt="layers">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'export',
-      }"
-      @click="setActiveBar('export')"
-    >
-      <img src="/tools/download.svg" alt="export">
-    </button>
+    <h4 class="group-title">Filters</h4>
+    <div class="behavior-inputs-wrapper">
+      <h5 class="behavior-inputs-wrapper__title">quality</h5>
+      <div class="behavior-inputs-wrapper__inputs">
+        <div class="behavior-inputs behavior-inputs_size" title="quality">
+          <label for="quality">Q:</label>
+          <input v-model="behavior.quality" type="number" name="quality" id="quality">
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
   .behavior-bar {
     display: flex;
+    flex-direction: column;
     gap: 10px;
   }
 

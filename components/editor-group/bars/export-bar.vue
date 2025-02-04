@@ -1,82 +1,55 @@
 <script setup lang="ts">
-import type { TBarName } from '~/types/tool.types';
+import ExecutionDelay from 'execution-delay';
 
-const toolStore = useToolStore();
+const workplaceStore = useWorkplaceStore();
+const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
 
-const activeBar: ComputedRef<TBarName | null> = computed(() => toolStore.getActiveBar);
-
-function setActiveBar(bar: TBarName) {
-  if (activeBar.value === bar) {
-    toolStore.unsetActiveBar();
-    return;
-  }
-  toolStore.setActiveBar(bar);
+function downloadImage() {
+  ExecutionDelay.add('download', () => selectedWorkplace.value?.editor.downloadService.download(), 500);
 }
 </script>
 
 <template>
   <div class="behavior-bar">
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'settings',
-      }"
-      @click="setActiveBar('settings')"
-    >
-      <img src="/tools/settings.svg" alt="settings">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'image',
-      }"
-      @click="setActiveBar('image')"
-    >
-      <img src="/tools/image.svg" alt="image">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'filter',
-      }"
-      @click="setActiveBar('filter')"
-    >
-      <img src="/tools/filter.svg" alt="filter">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'history',
-      }"
-      @click="setActiveBar('history')"
-    >
-      <img src="/tools/history.svg" alt="history">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'layers',
-      }"
-      @click="setActiveBar('layers')"
-    >
-      <img src="/tools/layers.svg" alt="layers">
-    </button>
-    <button
-      class="tool"
-      :class="{
-        'tool__active': activeBar === 'export',
-      }"
-      @click="setActiveBar('export')"
-    >
-      <img src="/tools/download.svg" alt="export">
-    </button>
+    <div class="group-title">
+      <span>Export</span>
+    </div>
+    <div class="behavior-buttons">
+      <button
+        class="behavior-button"
+        @click="downloadImage"
+      >
+        Download PNG
+      </button>
+    </div>
   </div>
 </template>
 
 <style lang="scss" scoped>
   .behavior-bar {
     display: flex;
+    flex-direction: column;
     gap: 10px;
+  }
+
+  .history-list {
+    margin: 10px 0 0 0;
+    padding: 0 0 10px 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &__item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      color: #cfcfcf;
+
+      img {
+        max-width: 12px;
+      }
+    }
   }
 
   label {
@@ -103,7 +76,11 @@ function setActiveBar(bar: TBarName) {
   }
 
   .group-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     width: 100%;
+    min-width: 196px;
     color: #6d6e79;
     margin: 10px 0 0 0;
     font-weight: 400;
@@ -111,6 +88,8 @@ function setActiveBar(bar: TBarName) {
   }
 
   .behavior-buttons {
+    display: flex;
+    gap: 4px;
     cursor: pointer;
     > * {
       cursor: pointer;
@@ -118,13 +97,20 @@ function setActiveBar(bar: TBarName) {
   }
 
   .behavior-button {
+    width: 100%;
     border: #535460 1px solid;
-    border-radius: 7px;
+    background: none;
+    color: #ffffff;
     padding: 10px;
+    border-radius: 4px;
     display: flex;
     justify-content: center;
     text-transform: uppercase;
     font-size: 13px;
+
+    &:disabled {
+      color: #535460;
+    }
   }
 
   .behavior-inputs-wrapper {

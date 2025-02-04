@@ -1,9 +1,80 @@
 <script setup lang="ts">
-  import { VueCanvasEditorEngine } from 'canvas-editor-engine';
+import type { IDocumentInfo } from '~/types/document.types';
+import type { IProjectIllay, TSaveMethod } from '~/types/project-illay.types';
+import type { IWorkplace } from '~/types/workplace.types';
 
-  const VueCanvasEditorEngineInstance = new VueCanvasEditorEngine();
-  const initial = VueCanvasEditorEngineInstance.getInitial();
-  customElements.define('canvas-editor-engine', initial.component);
+const route = useRoute();
+const workplaceStore = useWorkplaceStore();
+const saveModalStore = useSaveModalStore();
+
+const isRestoreProject = ref(false);
+
+const documentFsId = computed(() => route.query?.documentFsId as unknown as IDocumentInfo['documentFsId']);
+const storeMethod: ComputedRef<TSaveMethod | undefined> = computed(() => route.query?.storeMethod as TSaveMethod);
+const project: ComputedRef<IProjectIllay | null> = computed(() => workplaceStore.getProjectIllayForRestore);
+const projectInfo: ComputedRef<IDocumentInfo | null> = computed(() => workplaceStore.getProjectsInfo.find(project => project.documentFsId === documentFsId.value) || null);
+const isFinalyRestoreStatus: ComputedRef<boolean> = computed(() => workplaceStore.isFinalyRestoreStatus);
+
+function getProjectFromServerStorage(projectInfo: IDocumentInfo) {
+  workplaceStore.getProjectById(projectInfo);
+}
+
+function uploadData() {
+  if (!!projectInfo.value && !!storeMethod.value) {
+    isRestoreProject.value = true;
+    saveModalStore.show();
+
+    switch (storeMethod.value) {
+      case 'LocalStorage':
+        console.log('From local storage');
+        break;
+      case 'Server':
+        getProjectFromServerStorage(projectInfo.value);
+        break;
+      default:
+        console.warn('Unknown store method');
+        break;
+    }
+  }
+}
+
+watch(project, () => {
+  if (project.value) {
+    const workplaceList: IWorkplace[] = [];
+    project.value.workplaceProjects.forEach((workplaceProject) => {
+      workplaceList.push({
+        id: workplaceProject.id,
+        title: workplaceProject.title,
+        position: workplaceProject.position,
+        size: workplaceProject.size,
+        editor: null,
+        activeLayerId: null,
+      });
+    });
+    workplaceList.forEach((workplace) => {
+      workplaceStore.restoreWorkplace(workplace);
+    });
+    workplaceStore.workplacesRestored();
+  }
+}, { deep: true });
+
+watch(projectInfo, () => {
+  uploadData();
+}, { deep: true });
+
+watch(documentFsId, (value) => {
+  console.log(value);
+  if (value) {
+    workplaceStore.getProjectInfo(`info_${value}`);
+  }
+}, { deep: true, immediate: true });
+
+watch(isFinalyRestoreStatus, (value) => {
+  if (value) {
+    isRestoreProject.value = false;
+  }
+});
+
 </script>
 
 <template>
@@ -11,6 +82,7 @@
     <ClientOnly fallback-tag="div" fallback="Loading comments...">
       <slot />
     </ClientOnly>
+    <save-modal :is-restore-project="isRestoreProject" />
   </div>
 </template>
 

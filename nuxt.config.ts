@@ -14,7 +14,10 @@ export default defineNuxtConfig({
     },
   ],
 
-  modules: ['@pinia/nuxt'],
+  modules: [
+    '@pinia/nuxt',
+    '@nuxt/ui',
+  ],
   
   pinia: {
     storesDirs: ['./stores/**'],
@@ -38,16 +41,5 @@ export default defineNuxtConfig({
     }
   },
 
-  // vite: {
-  //   plugins: [
-  //     yaml(),
-  //     vue({
-  //       template: {
-  //         compilerOptions: {
-  //           isCustomElement: (tag) => tag.includes('canvas-editor-engine')
-  //         }
-  //       }
-  //     }),
-  //   ]
-  // }
+  css: ['~/assets/css/main.css'],
 })

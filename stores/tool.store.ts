@@ -1,11 +1,12 @@
 import { defineStore } from 'pinia'
-import type { IChangeQuality, TToolName } from '~/types/tool.types';
+import type { IChangeQuality, TBarName, TToolName } from '~/types/tool.types';
 import type { ISize } from 'canvas-editor-engine/dist/types/general';
 import type { IPutWorkplaceSettings } from '~/types/workplace.types';
 
 export const useToolStore = defineStore('tool', {
   state: () => ({
     activeTool: null as TToolName | null,
+    activeBar: null as TBarName | null,
     belongsToWorkplace: ['create-workplace'],
     activeToolBelongsToWorkplace: false,
     behavior: {
@@ -21,6 +22,7 @@ export const useToolStore = defineStore('tool', {
 
   getters: {
     getActiveTool: state => state.activeTool,
+    getActiveBar: state => state.activeBar,
     isActiveToolBelongsToWorkplace: state => state.activeToolBelongsToWorkplace,
     getBehaviorCreateWorkplace: state => state.behavior['create-workplace'] as { size: ISize },
     getBehaviorChangeQuality: state => state.behavior['change-quality'] as IChangeQuality[],
@@ -32,7 +34,15 @@ export const useToolStore = defineStore('tool', {
       this.activeToolBelongsToWorkplace = (!!toolName) ? this.belongsToWorkplace.includes(toolName) : false;
     },
 
-    unset() {
+    setActiveBar(barName: TBarName | null) {
+      this.activeBar = barName;
+    },
+
+    unsetActiveBar() {
+      this.activeBar = null;
+    },
+
+    unsetActiveTool() {
       this.activeTool = null;
       this.activeToolBelongsToWorkplace = false;
     },
@@ -43,7 +53,6 @@ export const useToolStore = defineStore('tool', {
 
     setBehaviorChangeQuality(payload: IChangeQuality) {
       const qualityIndex = this.behavior['change-quality'].findIndex((q: IChangeQuality) => q.workplaceId === payload.workplaceId);
-      console.log('qualityIndex', qualityIndex);
       if (qualityIndex === -1) {
         this.behavior['change-quality'].push(payload);
       } else {

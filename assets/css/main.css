@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+[role="menu"] {
+  background-color: #181818!important;
+  border: #ffffff50 solid 1px!important;
+  -webkit-box-shadow: 0px 5px 10px 2px #ffffff05!important;
+  -moz-box-shadow: 0px 5px 10px 2px #ffffff05!important;
+  box-shadow: 0px 5px 10px 2px #ffffff05!important;
+}

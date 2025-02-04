@@ -1,6 +1,13 @@
 <script setup lang="ts">
+import type { TSaveMethod } from '~/types/project-illay.types';
+
+interface IProps {
+  storeMethod: TSaveMethod;
+}
+const props = defineProps<IProps>();
+
 function toEditor() {
-  navigateTo("/editor");
+  navigateTo(`/editor?storeMethod=${props.storeMethod}`);
 }
 </script>
 

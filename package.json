@@ -10,18 +10,25 @@
     "postinstall": "nuxt prepare"
   },
   "dependencies": {
+    "@nuxt/ui": "^3.0.0-alpha.12",
     "@pinia/nuxt": "^0.9.0",
     "@rollup/plugin-yaml": "^4.1.2",
     "@tsconfig/node20": "^20.1.4",
+    "@types/axios": "^0.9.36",
     "@vitejs/plugin-vue": "^5.2.1",
-    "canvas-editor-engine": "^2.1.26",
-    "execution-delay": "^1.0.2",
+    "@vueuse/core": "^12.5.0",
+    "axios": "^1.7.9",
+    "canvas-editor-engine": "^2.3.43",
+    "crypto-js": "^4.2.0",
+    "execution-delay": "^1.0.3",
+    "lzwcompress": "^1.1.0",
     "nuxt": "^3.14.1592",
     "pinia": "^2.3.0",
     "vue": "latest",
     "vue-router": "latest"
   },
   "devDependencies": {
+    "@types/crypto-js": "^4.2.2",
     "sass-embedded": "^1.82.0"
   },
   "overrides": {

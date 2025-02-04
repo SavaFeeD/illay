@@ -12,9 +12,8 @@ const isActiveCrop = ref(false);
 
 function setActiveTool(tool: TToolName) {
   if (activeTool.value === tool) {
-    // @ts-ignore
     selectedWorkplace.value?.editor.toolService.offActive();
-    toolStore.unset();
+    toolStore.unsetActiveTool();
     return;
   }
   toolStore.setActiveTool(tool);
@@ -22,7 +21,6 @@ function setActiveTool(tool: TToolName) {
     const useLib = toolRegistry.value.find((lib) => lib.workplaceId === selectedWorkplace.value?.id);
     const pipetteToolId = useLib?.registry.find((tool) => tool.name === 'pipette')?.id;
     if (pipetteToolId !== undefined) {
-      // @ts-ignore
       selectedWorkplace.value?.editor.toolService.setActive(pipetteToolId);
     }
   }
@@ -30,13 +28,11 @@ function setActiveTool(tool: TToolName) {
     const useLib = toolRegistry.value.find((lib) => lib.workplaceId === selectedWorkplace.value?.id);
     const excretionToolId = useLib?.registry.find((tool) => tool.name === 'excretion')?.id;
     if (excretionToolId !== undefined) {
-      // @ts-ignore
       selectedWorkplace.value?.editor.toolService.setActive(excretionToolId);
     }
   }
   if (tool === 'crop') {
     if (!isActiveCrop.value) {
-      // @ts-ignore
       selectedWorkplace.value?.editor.cropService.activate();
       isActiveCrop.value = true;
     }
@@ -45,25 +41,20 @@ function setActiveTool(tool: TToolName) {
 
 
 function cropDeativate() {
-  // @ts-ignore
   if (!selectedWorkplace.value?.editor?.cropService) return;
-  // @ts-ignore
   selectedWorkplace.value?.editor.cropService.deactivate();
   isActiveCrop.value = false;
-  toolStore.unset();
+  toolStore.unsetActiveTool();
 }
 
 function cropApply() {
-  // @ts-ignore
   if (!selectedWorkplace.value?.editor?.cropService) return;
   const ctx = selectedWorkplace.value?.ctx;
-  // @ts-ignore
   selectedWorkplace.value?.editor.cropService.crop(ctx);
   cropDeativate();
 }
 
 function excretionToolDeactivate() {
-  // @ts-ignore
   selectedWorkplace.value?.editor.toolService.offActive();
   const useLib = toolRegistry.value.find((lib) => lib.workplaceId === selectedWorkplace.value?.id);
   const excretionTool = useLib?.registry.find((tool) => tool.name === 'excretion');

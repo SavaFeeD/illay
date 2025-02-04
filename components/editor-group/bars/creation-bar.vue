@@ -2,14 +2,13 @@
 import type { TToolName } from '~/types/tool.types';
 
 const toolStore = useToolStore();
-const workplaceStore = useWorkplaceStore();
 
 const activeTool: ComputedRef<TToolName | null> = computed(() => toolStore.getActiveTool);
 
 const behavior = ref({
   size: {
-    width: 700,
-    height: 400,
+    width: 350,
+    height: 200,
   },
 });
 
@@ -20,7 +19,7 @@ watch(behavior.value, () => {
 
 function setActiveTool(tool: TToolName) {
   if (activeTool.value === tool) {
-    toolStore.unset();
+    toolStore.unsetActiveTool();
     return;
   }
   toolStore.setActiveTool(tool);

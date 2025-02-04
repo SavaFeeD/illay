@@ -1,10 +1,14 @@
 <script setup lang="ts">
-import type { IWorkplace } from '~/types/workplace.types';
+import type { ISelectedWorkplace, IWorkplace } from '~/types/workplace.types';
 import { AppConfig, VueCanvasEditorEngine } from 'canvas-editor-engine';
-import type { TToolName } from '~/types/tool.types';
+import type { IChangeQuality, TToolName } from '~/types/tool.types';
 import type { ISize } from 'canvas-editor-engine/dist/types/general';
 import ExecutionDelay from 'execution-delay';
 import type { IDrawImageArgs } from 'canvas-editor-engine/dist/types/image';
+import type WebComponent from 'canvas-editor-engine/dist/web-component';
+import type { IWorkplaceProject } from '~/types/project-illay.types';
+import type { ILayer } from 'canvas-editor-engine/dist/types/draw-layers';
+import type { IPainter, ISmoothFilterOptions } from 'canvas-editor-engine/dist/types/draw-service';
 
 interface IProps {
   workplace: IWorkplace;
@@ -13,21 +17,31 @@ interface IProps {
 };
 const props = defineProps<IProps>();
 
-const emits = defineEmits(['select']);
+const emits = defineEmits(['select', 'right-click']);
 
 const workplaceStore = useWorkplaceStore();
 const toolStore = useToolStore();
 const movementObjectStore = useMovementObjectStore();
 
-const editor = ref(null);
+const editor: Ref<WebComponent | null> = ref(null);
 const canvas: Ref<HTMLCanvasElement | null> = ref(null);
 const ctx: Ref<CanvasRenderingContext2D | null> = ref(null);
 const useEditorStoreForRender = ref(true);
+const currentQuality = ref(0);
 
 const activeTool: ComputedRef<TToolName | null> = computed(() => toolStore.getActiveTool);
-const selectedWorkplace: ComputedRef<IWorkplace | null> = computed(() => workplaceStore.getSelectedWorkplace);
+const selectedWorkplace: ComputedRef<ISelectedWorkplace | null> = computed(() => workplaceStore.getSelectedWorkplace);
 const zoom: ComputedRef<number> = computed(() => movementObjectStore.getZoom);
 const qualityList = computed(() => toolStore.getBehaviorChangeQuality);
+const isStartEditorsRestore = computed(() => workplaceStore.restoreProgressBar.workplacesRestore);
+const restoreIllayProject = computed(() => workplaceStore.getProjectIllayForRestore);
+const currentWorkplaceRecovery: ComputedRef<IWorkplaceProject | undefined> = computed(() => {
+  if (restoreIllayProject.value) {
+    const workplaceProjects = restoreIllayProject.value.workplaceProjects;
+    return workplaceProjects.find(workplaceProject => workplaceProject.id === props.workplace.id);
+  }
+});
+const selectedPainter = computed(() => workplaceStore.getSelectedPainter);
 
 const appConfig = new AppConfig();
 appConfig.CANVAS_SIZE.width = props.workplace.size.width;
@@ -39,6 +53,10 @@ const workplaceStyle = computed(() => ({
   'background-color': props?.backgroundColor || '#ffffff',
   'translate': `calc(${props.workplace.size.width}px / 2 * -1) calc(${props.workplace.size.height}px / 2 * -1)`,
 }));
+
+function openEditorContext(event: MouseEvent) {
+  emits('right-click', event, props.workplace.id);
+}
 
 function selectWorkplace() {
   if (!activeTool.value) {
@@ -60,68 +78,110 @@ function resizeInputImage(size: ISize) {
     console.warn('editor is null');
     return;
   };
-  // @ts-ignore
   editor.value.appConfig.CANVAS_SIZE.width = size.width;
-  // @ts-ignore
   editor.value.appConfig.CANVAS_SIZE.height = size.height;
 }
 
-function vagueFilterPixel(quality: number) {
+function vagueFilterPixelStart(qualityListValue: IChangeQuality[]) {
+  const quality = qualityListValue.find(quality => quality.workplaceId === props.workplace.id);
+  if (!quality?.value) return;
+  if (currentQuality.value === quality.value) return;
+  currentQuality.value = quality.value;
+  if (!editor.value) return;
+  const painter = selectedPainter.value?.painter;
+  if (!painter) return console.warn('Painter is not selected');
+  editor.value.eventService.dispatch('loading-start');
+  ExecutionDelay.add('draw', () => {
+    vagueFilterPixel(quality.value, painter.id);
+  }, 500);
+}
+
+function vagueFilterPixel(quality: number, painterId: IPainter['id']) {
   const options: IDrawImageArgs = {
     position: {
       x: 0,
       y: 0,
     }
   };
-  // @ts-ignore
-  selectedWorkplace.value?.editor.drawService.drawSmoothImage(useEditorStoreForRender.value, options, { quality: quality });
+  const smoothFilterOptions: ISmoothFilterOptions = {
+    useStore: useEditorStoreForRender.value,
+    options: options,
+    filterOptions: { quality: quality },
+  }
+  selectedWorkplace.value?.editor.drawAccumulatorService.smoothFilter(painterId, smoothFilterOptions);
 }
 
-watch(() => props.workplace, (newValue) => {
-  console.log(newValue)
-  ExecutionDelay.add(`resizeInputImage-${props.workplace.id}`, () => {
-    if (selectedWorkplace.value) resizeInputImage(selectedWorkplace.value.size);
-  }, 400);
-}, { deep: true });
+function getPainters(): IPainter[] {
+  if (!selectedWorkplace.value) return [];
+  const layerId = selectedWorkplace.value.activeLayerId;
+  if (!layerId) {
+    console.warn(`layerId is ${layerId}`);
+    return [];
+  }
+  const layer = selectedWorkplace.value.editor.drawLayersService.getLayerById(layerId);
+  if (!layer) {
+    console.warn(`layer is ${layer}`);
+    return [];
+  }
+  return layer.painters;
+}
+
+function recoveryWorkplace(editor: WebComponent, ctx: CanvasRenderingContext2D) {
+  if (isStartEditorsRestore.value && currentWorkplaceRecovery.value) {
+    const currentProject = currentWorkplaceRecovery.value.project;
+    if (currentProject) {
+      const jsonProjects = JSON.stringify([currentProject]);
+      const baseLayer = editor.drawLayersService.getLayerByOrder(1);
+      editor.restoreJSONProjects(baseLayer.id, jsonProjects);
+      // const projectProcessor = editor.projectsService.on('File');
+      // const serializer = projectProcessor.getSerializerInstance(jsonProjects);
+      // const projects = serializer.getProjects();
+      // editor.drawService.drawProject(ctx, projects[0]);
+      // editor.throughHistoryService.recovery(projects[0]);
+      workplaceStore.editorsRestored();
+    }
+  }
+}
+
+// watch(() => props.workplace, () => {
+//   ExecutionDelay.add(`resizeInputImage-${props.workplace.id}`, () => {
+//     if (selectedWorkplace.value) resizeInputImage(selectedWorkplace.value.size);
+//   }, 400);
+// }, { deep: true });
 
 watch(zoom, (zoomValue) => {
   appConfig.ZOOM = zoomValue;
-  // @ts-ignore
   if (editor.value?.appConfig?.ZOOM != undefined) {
-    // @ts-ignore
     editor.value.appConfig.ZOOM = zoomValue;
   }
 });
 
-watch(qualityList, (qualityListValue) => {
-  const quality = qualityListValue.find(quality => quality.workplaceId === props.workplace.id);
-  if (!quality?.value) return;
-  // @ts-ignore
-  editor.value.eventService.dispatch('loading-start');
-  ExecutionDelay.add('draw', () => {
-    vagueFilterPixel(quality.value);
-  }, 500);
-}, { deep: true });
+watch(qualityList, vagueFilterPixelStart, { deep: true });
 
 onMounted(() => {
   try {
-    // @ts-ignore
+    if (!editor.value) throw new Error('Editor is null');
+    workplaceStore.setEditorForWorkplace(props.workplace.id, editor.value);
+
     const { editorElement, canvasSelector } = editor.value.init(appConfig);
-    
+
     canvas.value = editorElement.querySelector(canvasSelector);
     if (canvas.value) {
       ctx.value = canvas.value.getContext('2d') as CanvasRenderingContext2D;
+      recoveryWorkplace(editor.value, ctx.value);
     }
 
-    // @ts-ignore
     const registry = editor.value.toolService.registry;
-
-    console.log(registry);
-
     workplaceStore.addToolRegistryItem(props.workplace.id, registry);
 
+    const layer = editor.value.drawLayersService.getLayerByOrder(1);
+
+    console.log('layer', layer);
+
+    workplaceStore.setActiveLayerForWorkplace(props.workplace.id, layer.id);
+
   } catch (e) {
-    console.log(e);
+    console.error(e);
   }
 });
 </script>
@@ -130,6 +190,7 @@ onMounted(() => {
   <movement-object
     :order="workplace.id"
     class="workplace-position"
+    :recovery="currentWorkplaceRecovery"
   >
     <div
       class="workplace"
@@ -138,6 +199,7 @@ onMounted(() => {
         'workplace_selected': selectedWorkplace?.id === workplace.id,
       }"
       @click="selectWorkplace"
+      @contextmenu="openEditorContext($event)"
     >
       <label
         class="title"
@@ -155,10 +217,10 @@ onMounted(() => {
     border-radius: 5px;
 
     &_selected {
-      border-width: 4px;
+      border-width: 2px;
       border-style: solid;
       border-image: -webkit-linear-gradient(215deg, rgb(0, 0, 255) 0%, rgb(255, 0, 194) 100%) 1;
-      transform: translate(-4px, -4px);
+      transform: translate(-2px, -2px);
     }
   }
   .title {
