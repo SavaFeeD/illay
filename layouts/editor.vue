@@ -5,7 +5,7 @@ import type { IWorkplace } from '~/types/workplace.types';
 
 const route = useRoute();
 const workplaceStore = useWorkplaceStore();
-const saveModalStore = useSaveModalStore();
+const modalStore = useModalStore();
 
 const isRestoreProject = ref(false);
 
@@ -22,7 +22,7 @@ function getProjectFromServerStorage(projectInfo: IDocumentInfo) {
 function uploadData() {
   if (!!projectInfo.value && !!storeMethod.value) {
     isRestoreProject.value = true;
-    saveModalStore.show();
+    modalStore.show('save');
 
     switch (storeMethod.value) {
       case 'LocalStorage':
@@ -72,6 +72,7 @@ watch(documentFsId, (value) => {
 watch(isFinalyRestoreStatus, (value) => {
   if (value) {
     isRestoreProject.value = false;
+    modalStore.putOption('isRestoreProject', isRestoreProject.value);
   }
 });
 
@@ -82,7 +83,7 @@ watch(isFinalyRestoreStatus, (value) => {
     <ClientOnly fallback-tag="div" fallback="Loading comments...">
       <slot />
     </ClientOnly>
-    <save-modal :is-restore-project="isRestoreProject" />
+    <modal />
   </div>
 </template>
 

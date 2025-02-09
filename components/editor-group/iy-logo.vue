@@ -1,6 +1,6 @@
 <script setup lang="ts">
 const workplaceStore = useWorkplaceStore();
-const saveModalStore = useSaveModalStore();
+const modalStore = useModalStore();
 
 const menuIsOpen = ref(false);
 
@@ -15,7 +15,7 @@ function saveProject() {
 };
 
 function showModal() {
-  saveModalStore.show();
+  modalStore.show('save');
   workplaceStore.resetIsSavedProjectState();
 };
 </script>

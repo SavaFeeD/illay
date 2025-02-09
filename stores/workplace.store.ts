@@ -9,7 +9,7 @@ import * as CryptoJS from 'crypto-js';
 import lzwCompress from 'lzwcompress';
 import { http } from '~/composables/HTTP';
 import type { IChunk, IChunkResponse, IDocumentInfo, ResponseBody, ResponseData } from '~/types/document.types';
-import type { IPainter } from 'canvas-editor-engine/dist/types/draw-service';
+import type Painter from 'canvas-editor-engine/dist/utils/painter';
 
 export const useWorkplaceStore = defineStore('workplace', {
   state: () => ({
@@ -137,9 +137,13 @@ export const useWorkplaceStore = defineStore('workplace', {
       }
     },
 
-    selectPainter(painter: IPainter | null) {
+    selectPainter(painter: Painter | null) {
       const workplaceId = this.selectedWorkplace?.id;
-      if (painter && workplaceId) {
+      if (this.selectedPainter) {
+        this.selectedPainter.painter.unselectPainter();
+      }
+      if (painter && workplaceId) {  
+        painter.selectPainter();
         this.selectedPainter = {
           workplaceId,
           painter,

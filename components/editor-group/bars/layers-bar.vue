@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { IDrawLayersState } from 'canvas-editor-engine/dist/store/draw-layers.state';
 import type { ILayer } from 'canvas-editor-engine/dist/types/draw-layers';
-import type { IPainter } from 'canvas-editor-engine/dist/types/draw-service';
+import type Painter from 'canvas-editor-engine/dist/utils/painter';
 import ExecutionDelay from 'execution-delay';
 
 const workplaceStore = useWorkplaceStore();
@@ -56,9 +56,10 @@ function addLayer() {
   workplace.editor.drawLayersService.addLayer();
 }
 
-function selectPainter(painter: IPainter) {
+function selectPainter(painter: Painter) {
   if (selectedPainter.value?.painter?.id === painter.id) return console.warn('Painter is already selected');
   ExecutionDelay.add('select-painter', () => {
+    painter.selectPainter();
     workplaceStore.selectPainter(painter);
   }, 50);
 }
@@ -148,7 +149,6 @@ watch(selectedWorkplace, () => {
     list-style: none;
     display: flex;
     flex-direction: column;
-    gap: 10px;
 
     &__item-content {
       padding-left: 17px;
@@ -184,7 +184,7 @@ watch(selectedWorkplace, () => {
       justify-content: center;
       gap: 5px;
       color: #cfcfcf;
-      padding: 10px;
+      padding: 5px 10px;
       cursor: pointer;
 
       img {

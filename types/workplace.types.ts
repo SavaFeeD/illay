@@ -1,6 +1,6 @@
 import type { ILayer } from "canvas-editor-engine/dist/types/draw-layers";
-import type { IPainter } from "canvas-editor-engine/dist/types/draw-service";
 import type { IPosition, ISize, ITool } from "canvas-editor-engine/dist/types/general";
+import type Painter from "canvas-editor-engine/dist/utils/painter";
 import type WebComponent from "canvas-editor-engine/dist/web-component";
 
 export interface IEntityWorkplace {
@@ -38,5 +38,5 @@ export interface IToolRegistryItem {
 
 export interface ISelectedPainter {
   workplaceId: IWorkplace['id'];
-  painter: IPainter;
+  painter: Painter;
 }

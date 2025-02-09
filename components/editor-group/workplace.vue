@@ -8,7 +8,8 @@ import type { IDrawImageArgs } from 'canvas-editor-engine/dist/types/image';
 import type WebComponent from 'canvas-editor-engine/dist/web-component';
 import type { IWorkplaceProject } from '~/types/project-illay.types';
 import type { ILayer } from 'canvas-editor-engine/dist/types/draw-layers';
-import type { IPainter, ISmoothFilterOptions } from 'canvas-editor-engine/dist/types/draw-service';
+import type { ISmoothFilterOptions } from 'canvas-editor-engine/dist/types/draw-service';
+import type Painter from 'canvas-editor-engine/dist/utils/painter';
 
 interface IProps {
   workplace: IWorkplace;
@@ -96,7 +97,7 @@ function vagueFilterPixelStart(qualityListValue: IChangeQuality[]) {
   }, 500);
 }
 
-function vagueFilterPixel(quality: number, painterId: IPainter['id']) {
+function vagueFilterPixel(quality: number, painterId: Painter['id']) {
   const options: IDrawImageArgs = {
     position: {
       x: 0,
@@ -111,7 +112,7 @@ function vagueFilterPixel(quality: number, painterId: IPainter['id']) {
   selectedWorkplace.value?.editor.drawAccumulatorService.smoothFilter(painterId, smoothFilterOptions);
 }
 
-function getPainters(): IPainter[] {
+function getPainters(): Painter[] {
   if (!selectedWorkplace.value) return [];
   const layerId = selectedWorkplace.value.activeLayerId;
   if (!layerId) {

@@ -52,6 +52,16 @@ function unsetActiveTool() {
         >
           <img src="/tools/cursor-move.svg" alt="cursor-move">
         </button>
+        <button
+          class="tool"
+          :class="{
+            'tool__active': activeTool === 'cursor-worker',
+          }"
+          @click="setActiveTool('cursor-worker')"
+          title="cursor-worker"
+        >
+          <img src="/tools/cursor.svg" alt="cursor-worker">
+        </button>
       </div>
     </div>
     <button
@@ -101,8 +111,10 @@ function unsetActiveTool() {
       padding: 7px;
       background-color: #181818;
       border-radius: 5px;
-      right: -50px;
+      right: calc(2 * -48px);
       top: -7px;
+      display: flex;
+      gap: 10px;
     }
   }
 </style>

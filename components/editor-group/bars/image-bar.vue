@@ -5,6 +5,8 @@ const workplaceStore = useWorkplaceStore();
 
 const selectedWorkplace = computed(() => workplaceStore.getSelectedWorkplace);
 
+const fileInputKey = ref(0);
+
 const behavior = ref({
   position: {
     x: 0,
@@ -22,7 +24,6 @@ function setImage(event: Event) {
   const target = event.target as HTMLInputElement;
   const editor = selectedWorkplace.value?.editor;
   const layerId = selectedWorkplace.value?.activeLayerId;
-
   if (target && target.files) {
     file = target.files[0];
   }
@@ -45,6 +46,7 @@ function setImage(event: Event) {
     height: 220,
   };
   editor.drawAccumulatorService.add(layerId, 'image', opt, initialSize);
+  fileInputKey.value++;
 }
 </script>
 
@@ -55,6 +57,7 @@ function setImage(event: Event) {
         load image
       </label>
       <input
+        :key="fileInputKey"
         class="hide"
         type="file"
         name="load-image"
